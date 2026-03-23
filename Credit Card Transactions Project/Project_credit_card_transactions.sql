@@ -1,1 +1,4 @@
-SELECT * FROM credit_card_transactions;
+SELECT
+    *
+FROM
+    credit_card_transactions;
