@@ -1,7 +1,4 @@
-SELECT
-    *
-FROM
-    credit_card_transactions;
+SELECT * FROM credit_card_transactions;
 
 --------------------------------------------------------------
 
@@ -53,5 +50,25 @@ FROM monthly_ranking WHERE rnk=1;
 
 -------------------------------------------------------------------------
 
--- 3 Write a query to print the transaction details(all columns from the table) for each card type when
+-- 3 Write a query to print the transaction details (all columns from the table) for each card type when
 -- it reaches a cumulative of 1000000 total spends(We should have 4 rows in the o/p one for each card type)
+
+WITH cum_spend AS (
+SELECT
+    *,
+    SUM(amount) OVER(PARTITION BY card_type ORDER BY transaction_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_spend
+FROM credit_card_transactions
+),
+flag AS (
+SELECT 
+    *,
+    CASE WHEN cumulative_spend >= 1000000 THEN 1 ELSE 0 END AS flag_row
+FROM cum_spend
+),
+first_Mil_record AS (
+SELECT 
+    *,
+    flag_row - LAG(flag_row,1) OVER(PARTITION BY card_type ORDER BY cumulative_spend) AS first_M_val
+FROM flag
+)
+SELECT * FROM first_mil_record WHERE first_M_val=1;
