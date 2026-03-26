@@ -91,3 +91,41 @@ SELECT
     (amount / SUM(amount) OVER())*100 AS pct_spend
 FROM cte
 ORDER BY pct_spend ASC LIMIT 1;
+
+--------------------------------------------------------
+
+-- 5- write a query to print 3 columns:  city, highest_expense_type , lowest_expense_type (example format : Delhi , bills, Fuel)
+
+
+WITH cte AS (
+SELECT 
+    city,
+    exp_type,
+    SUM(amount) AS amount
+FROM credit_card_transactions
+GROUP BY city, exp_type
+),
+exp_ranking AS (
+SELECT
+    *,
+    DENSE_RANK() OVER(PARTITION BY city ORDER BY amount DESC) AS rnk
+FROM cte
+),
+results AS (
+SELECT
+    city,
+    exp_type,
+    amount,
+    rnk,
+    MIN(rnk) OVER(PARTITION BY city) AS highest_exp_rnk,
+    MAX(rnk) OVER(PARTITION BY city) AS lowest_exp_rnk
+FROM exp_ranking
+)
+SELECT
+    city,
+    MAX((CASE WHEN rnk = highest_exp_rnk THEN exp_type END)) AS highest_exp_type,
+    MAX((CASE WHEN rnk = lowest_exp_rnk THEN exp_type END)) AS lowest_exp_type
+FROM results
+-- WHERE rnk = highest_exp_type OR rnk = lowest_exp_type
+GROUP BY city
+ORDER BY city;
