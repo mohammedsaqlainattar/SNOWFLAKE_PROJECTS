@@ -133,3 +133,23 @@ ORDER BY city;
 ---------------------------------------------------------------------------
 
 -- 6- write a query to find percentage contribution of spends by females for each expense type
+
+
+WITH cte AS (
+SELECT
+    exp_type,
+    gender,
+    SUM(amount) AS amount
+FROM credit_card_transactions
+GROUP BY exp_type, gender
+),
+gender_contribution AS (
+SELECT
+    *,
+    ROUND((amount / SUM(amount) OVER(PARTITION BY exp_type))*100,2) AS pct_contr 
+FROM cte
+)
+SELECT exp_type, gender, pct_contr
+FROM gender_contribution
+WHERE gender='F'
+ORDER BY exp_type;
