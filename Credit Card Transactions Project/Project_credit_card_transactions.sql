@@ -179,3 +179,19 @@ SELECT *
 FROM MoM_growth 
 WHERE YYYY=2014 AND MM=1
 ORDER BY MoM_growth_ DESC;
+
+--------------------------------------------------------------
+
+-- 8- during weekends which city has highest total spend to total no of transcations ratio
+
+
+SELECT
+    city,
+    SUM(amount) AS amount,
+    COUNT(transaction_id) AS transaction_cnt,
+    ROUND(SUM(amount) / COUNT(transaction_id),2) AS spend_to_transaction_cnt_ratio
+FROM credit_card_transactions
+WHERE DAYNAME(transaction_date) IN ('Sun','Sat')
+GROUP BY city
+ORDER BY spend_to_transaction_cnt_ratio DESC
+LIMIT 1;
