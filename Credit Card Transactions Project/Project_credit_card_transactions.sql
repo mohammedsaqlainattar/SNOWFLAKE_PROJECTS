@@ -195,3 +195,33 @@ WHERE DAYNAME(transaction_date) IN ('Sun','Sat')
 GROUP BY city
 ORDER BY spend_to_transaction_cnt_ratio DESC
 LIMIT 1;
+
+--------------------------------------------------------------
+
+-- 9- which city took least number of days to reach its 500th transaction after the first transaction in that city
+
+
+WITH transaction_no AS (
+SELECT 
+    city,
+    transaction_date,
+    ROW_NUMBER() OVER(PARTITION BY city ORDER BY transaction_date) AS rn
+FROM credit_card_transactions
+),
+days_diff AS (
+SELECT
+    *,
+    LAG(transaction_date) OVER(PARTITION BY city ORDER BY transaction_date) AS first_tran_date,
+    DATEDIFF(DAY,LAG(transaction_date) OVER(PARTITION BY city ORDER BY transaction_date),transaction_date) AS days_elapsed
+FROM transaction_no 
+WHERE rn=1 OR rn=500
+)
+SELECT
+    city,
+    first_tran_date,
+    transaction_date AS fivehund_th_tran_date,
+    days_elapsed
+FROM days_diff 
+WHERE days_elapsed IS NOT NULL 
+ORDER BY days_elapsed ASC
+LIMIT 1;
