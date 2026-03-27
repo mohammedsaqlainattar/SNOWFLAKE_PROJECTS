@@ -153,3 +153,29 @@ SELECT exp_type, gender, pct_contr
 FROM gender_contribution
 WHERE gender='F'
 ORDER BY exp_type;
+
+---------------------------------------------------------------
+
+-- 7- which card and expense type combination saw highest month over month growth in Jan-2014
+
+WITH cte AS (
+SELECT  
+    YEAR(transaction_date) AS YYYY, 
+    MONTH(transaction_date) AS MM,
+    card_type,
+    exp_type,
+    SUM(amount) AS amount
+FROM credit_card_transactions
+GROUP BY YEAR(transaction_date),MONTH(transaction_date),card_type,exp_type
+),
+MoM_growth AS (
+SELECT
+    *,
+    LAG(amount) OVER(PARTITION BY card_type,exp_type ORDER BY YYYY,MM) AS prev_month_amt,
+    ((amount / LAG(amount) OVER(PARTITION BY card_type,exp_type ORDER BY YYYY,MM))-1)*100 AS MoM_growth_
+FROM cte
+)
+SELECT *
+FROM MoM_growth 
+WHERE YYYY=2014 AND MM=1
+ORDER BY MoM_growth_ DESC;
