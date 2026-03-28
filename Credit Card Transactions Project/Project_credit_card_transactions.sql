@@ -225,3 +225,5 @@ FROM days_diff
 WHERE days_elapsed IS NOT NULL 
 ORDER BY days_elapsed ASC
 LIMIT 1;
+
+----------------------------------------------------------------
