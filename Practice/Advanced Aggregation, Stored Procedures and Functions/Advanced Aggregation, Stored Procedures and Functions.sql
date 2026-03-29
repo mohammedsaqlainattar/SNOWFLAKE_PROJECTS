@@ -23,3 +23,40 @@ SELECT *, RANK() OVER(PARTITION BY category ORDER BY rolling_3_month_sales DESC)
 FROM cte2 WHERE YYYY=2020 AND MM=1
 )
 SELECT * FROM cte3 WHERE rn<=3;
+
+---------------------------------------------------
+
+--2- write a query to find products for which month over month sales has never declined.
+
+WITH cte AS (
+SELECT
+    product_id,
+    YEAR(order_date) AS YYYY,
+    MONTH(order_date) AS MM,
+    SUM(sales) AS sales
+FROM orders
+GROUP BY product_id, YEAR(order_date), MONTH(order_date)
+),
+cte2 AS (
+SELECT
+    *,
+    LAG(sales,1) OVER(PARTITION BY product_id ORDER BY YYYY,MM) AS prior_month_sales,
+    sales - LAG(sales,1) OVER(PARTITION BY product_id ORDER BY YYYY,MM) AS growth
+FROM cte
+),
+cte3 AS (
+SELECT
+    *,
+    (CASE WHEN growth>=0 THEN 1 ELSE 0 END) AS flag
+FROM cte2
+WHERE growth IS NOT NULL
+)
+SELECT
+    product_id,
+    COUNT(*) AS no_of_months,
+    SUM(flag) AS non_negative_growth_periods
+FROM cte3
+GROUP BY product_id
+HAVING COUNT(*)=SUM(flag);
+
+------------------------------------------------------
