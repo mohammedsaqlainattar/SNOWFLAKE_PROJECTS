@@ -81,3 +81,49 @@ FROM cte
 SELECT * FROM cte2 WHERE sales > prev_2M_sales;
 
 --------------------------------------------------
+
+--4- write a user defined functions  which takes 2 input parameters of DATE data type. 
+-- The function should return no of business days between the 2 dates.
+-- note -> if any of the 2 input dates are falling on saturday or sunday then function should use immediate Monday 
+-- date for calculation
+
+-- example if we pass dates as 2024-11-30 and 2024-12-05..then it should calculate business days 
+-- between 2024-12-02 and 2024-12-05
+
+
+
+-- Below solution uses Snowflake's syntax
+
+CREATE OR REPLACE FUNCTION fn_business_days(start_date DATE, end_date DATE)
+RETURNS INT
+AS
+$$
+DECLARE
+    adj_start DATE;
+    adj_end DATE;
+    start_dow INT;
+    end_dow INT;
+BEGIN
+    start_dow := DATE_PART(WEEKDAY, start_date);
+    end_dow := DATE_PART(WEEKDAY, end_date);
+
+    IF (start_dow = 0) THEN
+        adj_start := DATEADD(DAY, 1, start_date);
+    ELSEIF (start_dow = 6) THEN
+        adj_start := DATEADD(DAY, 2, start_date);
+    ELSE
+        adj_start := start_date;
+    END IF;
+
+    IF (end_dow = 0) THEN
+        adj_end := DATEADD(DAY, 1, end_date);
+    ELSEIF (end_dow = 6) THEN
+        adj_end := DATEADD(DAY, 2, end_date);
+    ELSE
+        adj_end := end_date;
+    END IF;
+
+    RETURN DATEDIFF(DAY, adj_start, adj_end)
+           - 2 * DATEDIFF(WEEK, adj_start, adj_end);
+END;
+$$
